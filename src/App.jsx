@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { VALUE_CONFIG, CATEGORIES, VALUES, SAMPLE_CASES } from "./constants";
 import { fetchAllCases, createCase, updateCase, deleteCase, reorderCases } from "./services/airtable";
-import GridCard from "./components/GridCard";
 import KanbanView from "./components/KanbanView";
 import Modal from "./components/Modal";
 import AddModal from "./components/AddModal";
@@ -16,7 +15,6 @@ export default function App() {
   const [loading, setLoading]   = useState(!IS_PREVIEW);
   const [error, setError]       = useState(null);
   const [saving, setSaving]     = useState(false);
-  const [view, setView]         = useState("kanban");
   const [selected, setSelected] = useState(null);
   const [adding, setAdding]     = useState(false);
   const [search, setSearch]     = useState("");
@@ -119,14 +117,6 @@ export default function App() {
     fontSize: 12, cursor: "pointer", fontFamily: "'DM Mono', monospace",
     transition: "all 0.15s", fontWeight: active ? 700 : 400,
   });
-  const viewBtnStyle = (active) => ({
-    padding: "6px 14px", borderRadius: 8, fontSize: 12, cursor: "pointer",
-    fontFamily: "'DM Mono', monospace", transition: "all 0.15s",
-    background: active ? "rgba(255,255,255,0.1)" : "none",
-    color: active ? "#F1F5F9" : "#64748B",
-    border: `1px solid ${active ? "rgba(255,255,255,0.2)" : "transparent"}`,
-    fontWeight: active ? 600 : 400,
-  });
 
   // ── Loading / Error states ────────────────────────────────────────
   if (loading) return (
@@ -163,10 +153,6 @@ export default function App() {
             <h1 style={{ fontSize: 28, fontWeight: 700, fontFamily: "'Playfair Display', serif", background: "linear-gradient(135deg, #F1F5F9, #94A3B8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Use Case Tracker</h1>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: 4 }}>
-              <button onClick={() => setView("grid")} style={viewBtnStyle(view === "grid")}>⊞ Grid</button>
-              <button onClick={() => setView("kanban")} style={viewBtnStyle(view === "kanban")}>⊟ Kanban</button>
-            </div>
             <span style={{ fontSize: 11, color: saving ? "#F5C542" : IS_PREVIEW ? "#475569" : "#2D6A4F", background: saving ? "rgba(245,197,66,0.08)" : IS_PREVIEW ? "rgba(255,255,255,0.04)" : "rgba(0,229,160,0.08)", border: `1px solid ${saving ? "rgba(245,197,66,0.2)" : IS_PREVIEW ? "rgba(255,255,255,0.1)" : "rgba(0,229,160,0.2)"}`, borderRadius: 20, padding: "4px 10px", fontFamily: "'DM Mono', monospace", transition: "all 0.3s" }}>
               {saving ? "○ saving..." : IS_PREVIEW ? "◈ preview mode" : "● synced to airtable"}
             </span>
@@ -188,39 +174,23 @@ export default function App() {
           </div>
         </div>
 
-        {/* ── Grid filters ── */}
-        {view === "grid" && (
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20, alignItems: "center" }}>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "6px 14px", color: "#CBD5E1", fontSize: 12, fontFamily: "'DM Mono', monospace", outline: "none", width: 160 }} />
-            <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", margin: "0 4px" }} />
-            {CATEGORIES.map(c => <button key={c} onClick={() => setFilterCat(c)} style={chipStyle(filterCat === c)}>{c}</button>)}
-            <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", margin: "0 4px" }} />
-            {VALUES.map(v => <button key={v} onClick={() => setFilterVal(v)} style={chipStyle(filterVal === v)}>{v === "All" ? "All Values" : v}</button>)}
-            <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", margin: "0 4px" }} />
-            <select value={filterTag} onChange={e => setFilterTag(e.target.value)} style={{ background: filterTag ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${filterTag ? "#A78BFA" : "rgba(255,255,255,0.2)"}`, borderRadius: 20, padding: "5px 12px", color: filterTag ? "#A78BFA" : "#94A3B8", fontSize: 12, fontFamily: "'DM Mono', monospace", cursor: "pointer", outline: "none", fontWeight: filterTag ? 700 : 400 }}>
-              <option value="">All Tags</option>
-              {allTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
-            </select>
-          </div>
-        )}
-        {view === "kanban" && <div style={{ marginBottom: 20 }} />}
+        {/* ── Filters ── */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20, alignItems: "center" }}>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "6px 14px", color: "#CBD5E1", fontSize: 12, fontFamily: "'DM Mono', monospace", outline: "none", width: 160 }} />
+          <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", margin: "0 4px" }} />
+          {CATEGORIES.map(c => <button key={c} onClick={() => setFilterCat(c)} style={chipStyle(filterCat === c)}>{c}</button>)}
+          <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", margin: "0 4px" }} />
+          {VALUES.map(v => <button key={v} onClick={() => setFilterVal(v)} style={chipStyle(filterVal === v)}>{v === "All" ? "All Values" : v}</button>)}
+          <div style={{ width: 1, height: 20, background: "rgba(255,255,255,0.08)", margin: "0 4px" }} />
+          <select value={filterTag} onChange={e => setFilterTag(e.target.value)} style={{ background: filterTag ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${filterTag ? "#A78BFA" : "rgba(255,255,255,0.2)"}`, borderRadius: 20, padding: "5px 12px", color: filterTag ? "#A78BFA" : "#94A3B8", fontSize: 12, fontFamily: "'DM Mono', monospace", cursor: "pointer", outline: "none", fontWeight: filterTag ? 700 : 400 }}>
+            <option value="">All Tags</option>
+            {allTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+          </select>
+        </div>
       </div>
 
-      {/* ── Main content ── */}
-      {view === "grid" ? (
-        <div style={{ padding: "0 32px 48px", width: "100%", boxSizing: "border-box" }}>
-          {filtered.length === 0
-            ? <div style={{ textAlign: "center", padding: "60px 0", color: "#475569", fontFamily: "'DM Mono', monospace" }}>No results found.</div>
-            : <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
-                {filtered.map(item => (
-                  <GridCard key={item.id} item={item} onClick={() => setSelected(item)} onTagClick={tag => setFilterTag(filterTag === tag ? "" : tag)} />
-                ))}
-              </div>
-          }
-        </div>
-      ) : (
-        <KanbanView cases={cases} onCardClick={setSelected} onReorder={handleReorder} />
-      )}
+      {/* ── Kanban ── */}
+      <KanbanView cases={filtered} onCardClick={setSelected} onReorder={handleReorder} />
 
       {/* ── Modals ── */}
       {selected && (
