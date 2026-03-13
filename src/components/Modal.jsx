@@ -7,10 +7,26 @@ export default function Modal({ item, onClose, onSave, onDelete }) {
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [draft, setDraft] = useState({ ...item, tagsString: item.tags.join(", ") });
+  const [newNote, setNewNote] = useState("");
 
   const handleSave = () => {
     onSave({ ...draft, tags: draft.tagsString.split(",").map(t => t.trim()).filter(Boolean) });
     setEditing(false);
+  };
+
+  const handleAddNote = () => {
+    if (!newNote.trim()) return;
+    const note = {
+      text: newNote.trim(),
+      date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+    };
+    const updated = { ...item, notes: [note, ...(item.notes || [])] };
+    onSave(updated);
+    setNewNote("");
+  };
+
+  const handleNoteKeyDown = (e) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleAddNote();
   };
 
   const labelStyle = { fontSize: 11, color: "#475569", fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 5, display: "block" };
@@ -91,6 +107,35 @@ export default function Modal({ item, onClose, onSave, onDelete }) {
                 {item.tools?.length > 0 ? item.tools.map(t => <ToolPill key={t.name} name={t.name} date={t.date} />) : <span style={{ color: "#475569", fontSize: 13 }}>None yet</span>}
               </div>
             </div>
+
+            {/* ── Notes log ── */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, color: "#475569", fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>Notes Log</div>
+              <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                <textarea
+                  value={newNote}
+                  onChange={e => setNewNote(e.target.value)}
+                  onKeyDown={handleNoteKeyDown}
+                  placeholder="Add a note... (Ctrl+Enter to save)"
+                  rows={2}
+                  style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "#CBD5E1", fontSize: 13, padding: "9px 12px", fontFamily: "inherit", resize: "none", outline: "none" }}
+                />
+                <button onClick={handleAddNote} style={{ padding: "0 16px", borderRadius: 8, border: "none", background: "#00E5A0", color: "#0D1120", fontWeight: 700, cursor: "pointer", fontSize: 13, fontFamily: "'DM Sans', sans-serif", alignSelf: "stretch" }}>+ Add</button>
+              </div>
+              {item.notes?.length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {item.notes.map((note, i) => (
+                    <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 8, padding: "12px 14px" }}>
+                      <div style={{ fontSize: 11, color: "#475569", fontFamily: "'DM Mono', monospace", marginBottom: 6 }}>{note.date}</div>
+                      <div style={{ fontSize: 13, color: "#CBD5E1", lineHeight: 1.6 }}>{note.text}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: 13, color: "#475569", fontFamily: "'DM Mono', monospace" }}>No notes yet.</div>
+              )}
+            </div>
+
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
               <button onClick={() => setEditing(true)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.12)", background: "none", color: "#94A3B8", cursor: "pointer", fontSize: 13 }}>✎ Edit</button>
             </div>

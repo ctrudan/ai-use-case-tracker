@@ -20,6 +20,7 @@ export function fromAirtable(rec) {
     summary:    f.Summary       || "",
     commentary: f.Commentary    || "",
     tools:      f.Tools ? (() => { try { return JSON.parse(f.Tools); } catch { return []; } })() : [],
+    notes:      f.Notes ? (() => { try { return JSON.parse(f.Notes); } catch { return []; } })() : [],
     sortOrder:  f["Sort Order"] ?? 0,
   };
 }
@@ -36,6 +37,7 @@ export function toAirtable(item) {
     Summary:       item.summary,
     Commentary:    item.commentary,
     Tools:         JSON.stringify(item.tools),
+    Notes:         JSON.stringify(item.notes || []),
     "Sort Order":  item.sortOrder ?? 0,
   };
 }
