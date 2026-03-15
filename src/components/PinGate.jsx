@@ -21,8 +21,7 @@ export default function PinGate({ children }) {
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push({
           event: "pin_unlock_success",
-      });
-}
+        });
       } else {
         setError(true);
         setPin("");
