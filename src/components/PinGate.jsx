@@ -18,6 +18,11 @@ export default function PinGate({ children }) {
       const data = await res.json();
       if (data.success) {
         setUnlocked(true);
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: "pin_unlock_success",
+      });
+}
       } else {
         setError(true);
         setPin("");
