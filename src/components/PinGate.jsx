@@ -26,6 +26,10 @@ export default function PinGate({ children }) {
         setError(true);
         setPin("");
         setTimeout(() => setError(false), 2000);
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: "pin_unlock_failed",
+        });
       }
     } catch {
       setError(true);
