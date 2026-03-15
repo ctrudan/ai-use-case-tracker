@@ -15,6 +15,19 @@ export default function AddModal({ onClose, onAdd }) {
 
   const handleAdd = () => {
     if (!form.title.trim()) return;
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+    event: "use_case_added",
+    use_case_title: form.title.trim(),
+    use_case_category: form.category,
+    use_case_value: form.value,
+    use_case_status: form.status,
+    use_case_effort: form.effort,
+    use_case_tool: form.toolName || "none",
+    use_case_tag_count: form.tags
+      ? form.tags.split(",").map(t => t.trim()).filter(Boolean).length
+      : 0,
+  });
     onAdd({
       id: Date.now(),
       title: form.title,
