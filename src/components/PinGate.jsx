@@ -1,19 +1,34 @@
 import { useState } from "react";
 
-const CORRECT_PIN = "2416"; // Change this to your preferred PIN
-
 export default function PinGate({ children }) {
   const [pin, setPin] = useState("");
   const [unlocked, setUnlocked] = useState(false);
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
-    if (pin === CORRECT_PIN) {
-      setUnlocked(true);
-    } else {
+  const handleSubmit = async () => {
+    if (!pin.trim()) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/.netlify/functions/validate-pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setUnlocked(true);
+      } else {
+        setError(true);
+        setPin("");
+        setTimeout(() => setError(false), 2000);
+      }
+    } catch {
       setError(true);
       setPin("");
       setTimeout(() => setError(false), 2000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,6 +53,7 @@ export default function PinGate({ children }) {
             onKeyDown={handleKeyDown}
             placeholder="Enter PIN"
             autoFocus
+            disabled={loading}
             style={{ width: "100%", background: error ? "rgba(239,68,68,0.08)" : "rgba(255,255,255,0.04)", border: `1px solid ${error ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.12)"}`, borderRadius: 10, padding: "12px 16px", color: "#F1F5F9", fontSize: 18, fontFamily: "'DM Mono', monospace", outline: "none", textAlign: "center", letterSpacing: "0.3em", boxSizing: "border-box", transition: "border 0.2s" }}
           />
           {error && (
@@ -47,9 +63,10 @@ export default function PinGate({ children }) {
 
         <button
           onClick={handleSubmit}
-          style={{ width: "100%", padding: "12px", borderRadius: 10, border: "none", background: "#00E5A0", color: "#0D1120", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}
+          disabled={loading}
+          style={{ width: "100%", padding: "12px", borderRadius: 10, border: "none", background: loading ? "#64748B" : "#00E5A0", color: "#0D1120", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}
         >
-          Unlock
+          {loading ? "Checking..." : "Unlock"}
         </button>
       </div>
     </div>
