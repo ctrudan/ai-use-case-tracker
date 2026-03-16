@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { VALUE_CONFIG, CATEGORIES, VALUES, SAMPLE_CASES } from "./constants";
-import { fetchAllCases, createCase, updateCase, deleteCase, reorderCases } from "./services/airtable";
+import { fetchAllCases, createCase, updateCase, deleteCase, reorderCases } from "./services/supabase";
 import KanbanView from "./components/KanbanView";
 import Modal from "./components/Modal";
 import AddModal from "./components/AddModal";
 
-// Preview mode: use sample data in Claude sandbox, real Airtable everywhere else
+// Preview mode: use sample data in Claude sandbox, real Supabase everywhere else
 const IS_PREVIEW = typeof window !== "undefined" &&
   !window.location.hostname.includes("netlify") &&
   !window.location.hostname.includes("localhost");
@@ -122,7 +122,7 @@ export default function App() {
   if (loading) return (
     <div style={{ minHeight: "100vh", width: "100vw", background: "#080C18", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Mono', monospace", color: "#475569", fontSize: 13 }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');`}</style>
-      ● loading from airtable...
+      ● loading...
     </div>
   );
 
@@ -154,7 +154,7 @@ export default function App() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <span style={{ fontSize: 11, color: saving ? "#F5C542" : IS_PREVIEW ? "#475569" : "#2D6A4F", background: saving ? "rgba(245,197,66,0.08)" : IS_PREVIEW ? "rgba(255,255,255,0.04)" : "rgba(0,229,160,0.08)", border: `1px solid ${saving ? "rgba(245,197,66,0.2)" : IS_PREVIEW ? "rgba(255,255,255,0.1)" : "rgba(0,229,160,0.2)"}`, borderRadius: 20, padding: "4px 10px", fontFamily: "'DM Mono', monospace", transition: "all 0.3s" }}>
-              {saving ? "○ saving..." : IS_PREVIEW ? "◈ preview mode" : "● synced to airtable"}
+              {saving ? "○ saving..." : IS_PREVIEW ? "◈ preview mode" : "● synced"}
             </span>
             <button onClick={() => setAdding(true)} style={{ padding: "10px 20px", borderRadius: 10, border: "none", background: "#00E5A0", color: "#0D1120", fontWeight: 700, cursor: "pointer", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>+ New Use Case</button>
           </div>
