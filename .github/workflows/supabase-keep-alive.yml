@@ -2,35 +2,54 @@ name: Supabase Keep-Alive
 
 on:
   schedule:
-    - cron: '0 9 * * 3'  # Every Wednesday at 9:00 AM UTC
-    - cron: '0 9 * * 6'  # Every Saturday at 9:00 AM UTC
-  workflow_dispatch:      # Allows manual trigger from GitHub Actions UI
+    - cron: '0 9 * * *'    # Daily at 9:00 AM UTC
+  workflow_dispatch:        # Manual trigger from the Actions UI
+
+permissions:
+  contents: write           # Needed only for the auto-disable safeguard commit
 
 jobs:
   ping:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Install Supabase client
-        run: npm install @supabase/supabase-js
+      - name: Check out repo
+        uses: actions/checkout@v4
 
       - name: Ping Supabase
         env:
           SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
-          node -e "
-          const { createClient } = require('@supabase/supabase-js');
-          const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
-          (async () => {
-            const { data, error } = await supabase
-              .from('use_cases')
-              .select('id')
-              .limit(1);
-            if (error) {
-              console.error('Ping failed:', error.message);
-              process.exit(1);
-            }
-            console.log('Ping successful — Supabase is active.');
-          })();
-          "
+          HTTP_CODE=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/use_cases?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+          echo "HTTP status: $HTTP_CODE"
+          echo "Response body: $(cat /tmp/response.txt)"
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "Ping successful. Supabase is active."
+          else
+            echo "Ping failed with status $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: Prevent workflow auto-disable
+        if: always()
+        run: |
+          # GitHub disables scheduled workflows after 60 days of no repo activity.
+          # Workflow runs do NOT count toward that timer; only commits do.
+          # So if the latest commit is older than 50 days, push an empty commit
+          # to reset the clock. During active development this never fires.
+          LAST_COMMIT=$(git log -1 --format=%ct)
+          NOW=$(date +%s)
+          DAYS=$(( (NOW - LAST_COMMIT) / 86400 ))
+          echo "Days since last commit: $DAYS"
+          if [ "$DAYS" -ge 50 ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit --allow-empty -m "chore: keep-alive commit to prevent workflow auto-disable"
+            git push
+            echo "Pushed empty keep-alive commit."
+          else
+            echo "Recent commit exists; no keep-alive commit needed."
+          fi
